@@ -1,0 +1,40 @@
+package com.example.payments.controller;
+
+import com.example.payments.dto.*;
+import com.example.payments.service.PaymentService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/payments")
+public class PaymentController {
+    private final PaymentService service;
+
+    public PaymentController(PaymentService service) {
+        this.service = service;
+    }
+
+    @PostMapping
+    public ResponseEntity<PaymentResponse> create(@Valid @RequestBody CreatePaymentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentResponse> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.findById(id));
+    }
+
+    @GetMapping("/{id}/status")
+    public ResponseEntity<PaymentStatusResponse> getStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getStatus(id));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<PaymentResponse> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdatePaymentStatusRequest request) {
+        return ResponseEntity.ok(service.updateStatus(id, request));
+    }
+}

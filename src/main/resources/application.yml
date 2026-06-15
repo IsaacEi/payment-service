@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:sqlserver://localhost:1433;databaseName=paymentsdb;encrypt=true;trustServerCertificate=true}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:YourStrong!Passw0rd}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+  sql:
+    init:
+      mode: never
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+
+server:
+  port: 8080
+
+app:
+  rabbitmq:
+    exchange: ${PAYMENT_EXCHANGE:payments.exchange}
+    status-routing-key: ${PAYMENT_STATUS_ROUTING_KEY:payments.status.changed}
+    audit-queue: ${PAYMENT_AUDIT_QUEUE:payments.status.audit.queue}
+    notification-queue: ${PAYMENT_NOTIFICATION_QUEUE:payments.status.notification.queue}

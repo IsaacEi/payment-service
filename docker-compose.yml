@@ -1,0 +1,81 @@
+name: payment-service
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: payments-sqlserver
+    env_file:
+      - .env
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    ports:
+      - "${SQLSERVER_PORT}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U ${DATABASE_USER} -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: payments-sqlserver-init
+    env_file:
+      - .env
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/scripts
+    command: >
+      bash -c "/opt/mssql-tools18/bin/sqlcmd
+      -S sqlserver
+      -U ${DATABASE_USER}
+      -P \"$${MSSQL_SA_PASSWORD}\"
+      -C
+      -v DATABASE_NAME=${DATABASE_NAME}
+      -i /scripts/init-db.sql"
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: payments-rabbitmq
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment-service
+    env_file:
+      - .env
+    depends_on:
+      sqlserver-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_RABBITMQ_HOST: ${SPRING_RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${SPRING_RABBITMQ_PORT}
+      SPRING_RABBITMQ_USERNAME: ${SPRING_RABBITMQ_USERNAME}
+      SPRING_RABBITMQ_PASSWORD: ${SPRING_RABBITMQ_PASSWORD}
+      PAYMENT_EXCHANGE: ${PAYMENT_EXCHANGE}
+      PAYMENT_STATUS_ROUTING_KEY: ${PAYMENT_STATUS_ROUTING_KEY}
+      PAYMENT_AUDIT_QUEUE: ${PAYMENT_AUDIT_QUEUE}
+      PAYMENT_NOTIFICATION_QUEUE: ${PAYMENT_NOTIFICATION_QUEUE}
+    ports:
+      - "${APP_PORT}:8080"
+
+volumes:
+  sqlserver-data:

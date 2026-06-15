@@ -1,0 +1,99 @@
+package com.example.payments.service;
+
+import com.example.payments.dto.*;
+import com.example.payments.entity.Payment;
+import com.example.payments.entity.PaymentStatus;
+import com.example.payments.entity.PaymentStatusCode;
+import com.example.payments.exception.PaymentNotFoundException;
+import com.example.payments.exception.PaymentStatusNotFoundException;
+import com.example.payments.messaging.PaymentEventPublisher;
+import com.example.payments.repository.PaymentRepository;
+import com.example.payments.repository.PaymentStatusRepository;
+
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+public class PaymentService {
+    private final PaymentRepository paymentRepository;
+    private final PaymentStatusRepository statusRepository;
+    private final PaymentEventPublisher eventPublisher;
+
+    public PaymentService(PaymentRepository paymentRepository,
+                          PaymentStatusRepository statusRepository,
+                          PaymentEventPublisher eventPublisher) {
+        this.paymentRepository = paymentRepository;
+        this.statusRepository = statusRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    @Transactional
+    public PaymentResponse create(CreatePaymentRequest request) {
+        PaymentStatus pendingStatus = findStatusByCode(PaymentStatusCode.PENDING);
+
+        Payment payment = new Payment();
+        payment.setConcept(request.concept());
+        payment.setProductQuantity(request.productQuantity());
+        payment.setPayer(request.payer());
+        payment.setPayee(request.payee());
+        payment.setTotalAmount(request.totalAmount());
+        payment.setStatus(pendingStatus);
+        return toResponse(paymentRepository.save(payment));
+    }
+
+    @Transactional(readOnly = true)
+    public PaymentResponse findById(@NonNull Long id) {
+        return paymentRepository.findById(id)
+                .map(this::toResponse)
+                .orElseThrow(() -> new PaymentNotFoundException(id));
+    }
+
+    @Transactional(readOnly = true)
+    public PaymentStatusResponse getStatus(@NonNull Long id) {
+        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new PaymentNotFoundException(id));
+        return new PaymentStatusResponse(payment.getId(), toStatusDto(payment.getStatus()));
+    }
+
+    @Transactional
+    public PaymentResponse updateStatus(@NonNull Long id, UpdatePaymentStatusRequest request) {
+        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new PaymentNotFoundException(id));
+        PaymentStatus oldStatus = payment.getStatus();
+        PaymentStatus newStatus = findStatusByCode(request.statusCode());
+
+        payment.setStatus(newStatus);
+        Payment saved = paymentRepository.save(payment);
+
+        if (!oldStatus.getCode().equals(newStatus.getCode())) {
+            eventPublisher.publishStatusChanged(
+                    new PaymentStatusChangedEvent(saved.getId(), oldStatus.getCode(), newStatus.getCode(), LocalDateTime.now())
+            );
+        }
+        return toResponse(saved);
+    }
+
+    private PaymentStatus findStatusByCode(String code) {
+        return statusRepository.findByCodeAndActiveTrue(code)
+                .orElseThrow(() -> new PaymentStatusNotFoundException(code));
+    }
+
+    private PaymentResponse toResponse(Payment payment) {
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getConcept(),
+                payment.getProductQuantity(),
+                payment.getPayer(),
+                payment.getPayee(),
+                payment.getTotalAmount(),
+                toStatusDto(payment.getStatus()),
+                payment.getCreatedAt(),
+                payment.getUpdatedAt()
+        );
+    }
+
+    private PaymentStatusDto toStatusDto(PaymentStatus status) {
+        return new PaymentStatusDto(status.getId(), status.getCode(), status.getName());
+    }
+}
