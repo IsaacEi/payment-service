@@ -46,7 +46,7 @@ make up
 El servicio queda en:
 
 ```bash
-http://localhost:8081
+http://localhost:8080
 ```
 
 ## Crear base de datos y tablas
