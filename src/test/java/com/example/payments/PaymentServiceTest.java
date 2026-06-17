@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 
@@ -48,6 +49,32 @@ class PaymentServiceTest {
         assertThat(paymentRepository.findById(response.id())).isPresent();
         assertThat(paymentStatusRepository.findByCodeAndActiveTrue("PENDING")).isPresent();
     }
+
+    @Test
+    void shouldListPaymentsWithFiltersAndPagination() {
+        paymentService.create(new CreatePaymentRequest(
+                "Compra de laptop",
+                1,
+                "Isaac Cisneros",
+                "Dell",
+                BigDecimal.valueOf(25000)
+        ));
+
+        paymentService.create(new CreatePaymentRequest(
+                "Compra de monitor",
+                2,
+                "Carlos Pérez",
+                "HP",
+                BigDecimal.valueOf(8000)
+        ));
+
+        var page = paymentService.findAll("isaac", null, "PENDING", PageRequest.of(0, 10));
+
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent().get(0).payer()).isEqualTo("Isaac Cisneros");
+        assertThat(page.getContent().get(0).status().code()).isEqualTo("PENDING");
+    }
+
 
     @Test
     void shouldUpdateStatusAndPublishEvent() {
