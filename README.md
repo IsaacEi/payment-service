@@ -167,5 +167,5 @@ Al cambiar el estatus, se publica un mensaje en RabbitMQ y lo reciben dos consum
 - Documento RabbitMQ: `docs/rabbitmq-definition.md`
 
 ## Nota 
-- Si el pueto cambia o marca error cambiarlo a un pueto disponible 
+- Si el puerto `8080` marca error cambiarlo a un puerto disponible ejemplo 8081 en las variables de entorno `APP_PORT=8081`
 
