@@ -7,6 +7,7 @@ Proyecto de pagos con Java 17, Spring Boot 3.2.5, SQL Server, RabbitMQ, JUnit y 
 | Método | Endpoint | Descripción |
 |---|---|---|
 | POST | `/api/payments` | Dar de alta un pago |
+| GET | `/api/payments` | Listar pagos con filtros, paginación y ordenamiento |
 | GET | `/api/payments/{id}` | Consultar un pago |
 | GET | `/api/payments/{id}/status` | Verificar estatus del pago |
 | PATCH | `/api/payments/{id}/status` | Cambiar estatus del pago y publicar evento RabbitMQ |
@@ -96,7 +97,7 @@ Valores por defecto desde `.env.example`:
 ## Crear pago
 
 ```bash
-curl -X POST http://localhost:8081/api/payments \
+curl -X POST http://localhost:8080/api/payments \
   -H "Content-Type: application/json" \
   -d '{
     "concept": "Compra de productos",
@@ -107,10 +108,32 @@ curl -X POST http://localhost:8081/api/payments \
   }'
 ```
 
+## Listar pagos
+
+```bash
+curl "http://localhost:8080/api/payments?page=0&size=10&sort=createdAt,desc"
+```
+
+## Listar pagos con filtros
+
+```bash
+curl "http://localhost:8080/api/payments?status=PENDING&payer=Isaac&payee=Proveedor&page=0&size=10"
+```
+
+Filtros disponibles:
+
+- `status`: código del estatus, por ejemplo `PENDING`, `PAID`, `CANCELLED`.
+- `payer`: búsqueda parcial por quien realiza el pago.
+- `payee`: búsqueda parcial por a quien se le paga.
+- `page`: página iniciando en `0`.
+- `size`: cantidad de registros por página.
+- `sort`: campo y dirección, por ejemplo `createdAt,desc` o `id,asc`.
+
+
 ## Cambiar estatus
 
 ```bash
-curl -X PATCH http://localhost:8081/api/payments/1/status \
+curl -X PATCH http://localhost:8080/api/payments/1/status \
   -H "Content-Type: application/json" \
   -d '{ "status": "PAID" }'
 ```
@@ -142,3 +165,7 @@ Al cambiar el estatus, se publica un mensaje en RabbitMQ y lo reciben dos consum
 - Dockerfile
 - Collection Postman: `postman/payment-service.postman_collection.json`
 - Documento RabbitMQ: `docs/rabbitmq-definition.md`
+
+## Nota 
+- Si el pueto cambia o marca error cambiarlo a un pueto disponible 
+

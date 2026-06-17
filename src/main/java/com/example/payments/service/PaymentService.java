@@ -10,9 +10,12 @@ import com.example.payments.messaging.PaymentEventPublisher;
 import com.example.payments.repository.PaymentRepository;
 import com.example.payments.repository.PaymentStatusRepository;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +33,28 @@ public class PaymentService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Transactional(readOnly = true)
+    public Page<PaymentResponse> findAll(String payer, String payee, String status, @NonNull Pageable pageable) {
+        Specification<Payment> spec = Specification.where(null);
+
+        if (payer != null && !payer.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("payer")), "%" + payer.toLowerCase() + "%"));
+        }
+
+        if (payee != null && !payee.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("payee")), "%" + payee.toLowerCase() + "%"));
+        }
+
+        if (status != null && !status.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.upper(root.get("status").get("code")), status.toUpperCase()));
+        }
+
+        return paymentRepository.findAll(spec, pageable).map(this::toResponse);
+    }
+
     @Transactional
     public PaymentResponse create(CreatePaymentRequest request) {
         PaymentStatus pendingStatus = findStatusByCode(PaymentStatusCode.PENDING);
@@ -43,6 +68,7 @@ public class PaymentService {
         payment.setStatus(pendingStatus);
         return toResponse(paymentRepository.save(payment));
     }
+    
 
     @Transactional(readOnly = true)
     public PaymentResponse findById(@NonNull Long id) {

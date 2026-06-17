@@ -5,7 +5,10 @@ import com.example.payments.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -14,6 +17,15 @@ public class PaymentController {
 
     public PaymentController(PaymentService service) {
         this.service = service;
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<PaymentResponse>> findAll(
+            @RequestParam(required = false) String payer,
+            @RequestParam(required = false) String payee,
+            @RequestParam(required = false) String status,
+            @NonNull Pageable pageable) {
+        return ResponseEntity.ok(service.findAll(payer, payee, status, pageable));
     }
 
     @PostMapping
