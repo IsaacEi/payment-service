@@ -184,6 +184,7 @@ docker compose run --rm payment-tests
 - Dockerfile
 - Collection Postman: `postman/payment-service.postman_collection.json`
 - Documento RabbitMQ: `docs/rabbitmq-definition.md`
+- Pruebas Unitarias `payment-tests`
 
 ## Nota 
 - Si el puerto `8080` marca error cambiarlo a un puerto disponible ejemplo 8081 en las variables de entorno `APP_PORT=8081`
