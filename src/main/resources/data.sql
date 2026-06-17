@@ -1,19 +1,23 @@
-IF NOT EXISTS (SELECT 1 FROM payment_statuses WHERE code = 'PENDING')
 INSERT INTO payment_statuses (code, name, description, active, created_at, updated_at)
-VALUES ('PENDING', 'Pendiente', 'Pago creado pendiente de procesamiento', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+SELECT 'PENDING', 'Pendiente', 'Pago creado pendiente de procesamiento', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM payment_statuses WHERE code = 'PENDING'
+);
 
-IF NOT EXISTS (SELECT 1 FROM payment_statuses WHERE code = 'PROCESSING')
 INSERT INTO payment_statuses (code, name, description, active, created_at, updated_at)
-VALUES ('PROCESSING', 'Procesando', 'Pago en proceso', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+SELECT 'PROCESSING', 'Procesando', 'Pago en proceso', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM payment_statuses WHERE code = 'PROCESSING'
+);
 
-IF NOT EXISTS (SELECT 1 FROM payment_statuses WHERE code = 'PAID')
 INSERT INTO payment_statuses (code, name, description, active, created_at, updated_at)
-VALUES ('PAID', 'Pagado', 'Pago completado correctamente', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+SELECT 'PAID', 'Pagado', 'Pago completado', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM payment_statuses WHERE code = 'PAID'
+);
 
-IF NOT EXISTS (SELECT 1 FROM payment_statuses WHERE code = 'REJECTED')
 INSERT INTO payment_statuses (code, name, description, active, created_at, updated_at)
-VALUES ('REJECTED', 'Rechazado', 'Pago rechazado', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
-
-IF NOT EXISTS (SELECT 1 FROM payment_statuses WHERE code = 'CANCELLED')
-INSERT INTO payment_statuses (code, name, description, active, created_at, updated_at)
-VALUES ('CANCELLED', 'Cancelado', 'Pago cancelado', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+SELECT 'CANCELLED', 'Cancelado', 'Pago cancelado', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM payment_statuses WHERE code = 'CANCELLED'
+);

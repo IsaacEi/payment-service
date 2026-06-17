@@ -76,6 +76,16 @@ services:
       PAYMENT_NOTIFICATION_QUEUE: ${PAYMENT_NOTIFICATION_QUEUE}
     ports:
       - "${APP_PORT}:8080"
+  
+  payment-tests:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: payment-tests
+    working_dir: /app
+    volumes:
+      - .:/app
+      - maven-cache:/root/.m2
+    command: mvn clean test
 
 volumes:
   sqlserver-data:
+  maven-cache:

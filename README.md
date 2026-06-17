@@ -151,6 +151,25 @@ Al cambiar el estatus, se publica un mensaje en RabbitMQ y lo reciben dos consum
 - `REJECTED`
 - `CANCELLED`
 
+## Pruebas unitarias
+
+El proyecto incluye pruebas unitarias para validar la lógica principal del servicio de pagos:
+
+- Crear un pago con estatus inicial `PENDING`.
+- Cambiar el estatus de un pago.
+- Publicar evento hacia RabbitMQ al cambiar el estatus.
+- Consultar pagos con filtros y paginación.
+
+### Ejecutar pruebas con Docker
+
+El proyecto incluye un servicio llamado `payment-tests` en `docker-compose.yml`.
+
+Para ejecutar las pruebas:
+
+```bash
+docker compose run --rm payment-tests
+```
+
 ## Entregables incluidos
 
 - Código Java Spring Boot
